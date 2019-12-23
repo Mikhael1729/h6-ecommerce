@@ -14,12 +14,13 @@ VALUES
 	Select * from Categories
 
 -- Ingresar Customers
-INSERT INTO Customers (FirstName, LastName, Phone)
-	VALUES('Mikhael', 'Santos', '8493518051')
-INSERT INTO Customers (FirstName, LastName, Phone)
-	VALUES('Abraham', 'Santos', '8295650292')
+INSERT INTO Customers (FirstName, LastName, Phone, Points)
+	VALUES
+		('Abraham', 'Santos', '8295650292', 0),
+		('Abigail', 'Fernández', '8295402463', 0);
 
 SELECT * FROM Customers
+-- DELETE FROM Customers where Id = 10
 /* Test Store Procedures */
 
 -- 1. Test InsertProduct
@@ -44,10 +45,20 @@ SELECT * FROM Products
 SELECT * FROM Products
 SELECT * FROM Customers
 
-EXEC AddToShoppingCart 3, 2, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
-EXEC AddToShoppingCart 3, 1, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
+EXEC AddToShoppingCart 12, 13, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
+EXEC AddToShoppingCart 12, 11, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
+EXEC AddToShoppingCart 12, 10, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
 
 SELECT * FROM ShoppingCarts
-DELETE FROM ShoppingCarts 
 
--- 4.1 Test Add to shopping cart
+-- 4.1 Test Remove from shopping cart
+EXEC RemoveFromShoppingCart 8, 3
+
+-- 4.2 Purchase. The following select statements are the modified tables after executing the store procedure after those.
+SELECT * FROM Orders
+SELECT * FROM OrderDetails
+SELECT * FROM Customers
+SELECT * FROM ShoppingCarts
+
+EXEC Purchase 12;
+-- 5

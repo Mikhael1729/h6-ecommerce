@@ -266,32 +266,29 @@ BEGIN
 			DECLARE @orderId INT = (SELECT TOP 1 OrderId FROM @table);
 
 			-- Insert order details (related with the inserted order).
-			DECLARE @insertedOrderDetails TABLE (
-				OrderId INT, 
-				ProductId INT, 
-				Quantity INT,
-				Price MONEY,
-				Itbis MONEY);
-	
 			INSERT INTO OrderDetails 
-				OUTPUT INSERTED.OrderId, INSERTED.ProductId, INSERTED.Quantity, INSERTED.Price, INSERTED.Itbis
-				SELECT 
-					@orderId,
-					s.ProductId,
-					s.Quantity,
-					p.Price,
-					(p.Price * s.Quantity * 0.18)
-				FROM ShoppingCarts AS s
-				INNER JOIN Products as p ON p.Id = s.ProductId
-				WHERE s.CustomerId = @customerId;
+			SELECT 
+				@orderId,
+				s.ProductId,
+				s.Quantity,
+				p.Price,
+				(p.Price * s.Quantity * 0.18)
+			FROM ShoppingCarts AS s
+			INNER JOIN Products as p ON p.Id = s.ProductId
+			WHERE s.CustomerId = @customerId;
 
 			/* Update customer points */
-			DECLARE @totalPurchase MONEY = (SELECT SUM(Price * Quantity) FROM @insertedOrderDetails)
-			DECLARE @itbisTotal MONEY = (SELECT SUM(Itbis) FROM @insertedOrderDetails);
-			DECLARE @total MONEY = @totalPurchase + @itbisTotal;
+			DECLARE @totalPurchase MONEY;
+			SET @totalPurchase = (SELECT SUM(Price * Quantity) FROM OrderDetails WHERE OrderId = @orderId);
+			
+			DECLARE @itbisTotal MONEY
+			SET @itbisTotal = (SELECT SUM(Itbis) FROM OrderDetails WHERE OrderId = @orderId);
+			
+			DECLARE @total MONEY 
+			SET @total = @totalPurchase + @itbisTotal;
 
 			IF(@total >= 100)
-				UPDATE Customers SET Points += (@total / 100) WHERE Id = @customerId;
+				UPDATE Customers SET Points += FLOOR(@total / 100) WHERE Id = @customerId;
 
 			/* Clean shopping cart */
 			DELETE ShoppingCarts WHERE CustomerId = @customerId;
