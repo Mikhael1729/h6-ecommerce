@@ -61,4 +61,121 @@ SELECT * FROM Customers
 SELECT * FROM ShoppingCarts
 
 EXEC Purchase 12;
--- 5
+GO
+
+-- 5 Mostrar los 5 productos mas vendidos
+
+CREATE VIEW TopFiveProducts
+AS
+SELECT TOP 5
+	O.ProductId,
+	Name,
+	SUM(Quantity) AS [Total Sales]
+FROM Products AS p
+INNER JOIN OrderDetails AS o ON p.Id = o.ProductId
+GROUP BY o.ProductId, Name
+ORDER BY [Total Sales] DESC
+GO
+
+SELECT * FROM TopFiveProducts
+GO
+
+-- 6. 
+CREATE PROC BestSellingForACustomer (@customerId int, @quantity INT)
+AS BEGIN
+	SELECT TOP(@quantity)
+		c.FirstName as [Customer's Name], 
+		od.ProductId as [Product ID], 
+		p.Name as [Product Description], 
+		sum(Quantity) as [Total Sales]
+	from Products as p
+	INNER JOIN OrderDetails AS od on p.Id = od.ProductId
+	INNER JOIN Orders as o on o.Id = od.OrderId
+	INNER JOIN Customers as c on c.Id = o.CustomerId
+	WHERE o.CustomerID = @customerId
+	GROUP BY od.ProductId, Name, c.FirstName
+	ORDER BY [Total Sales] DESC
+END
+GO
+
+EXEC BestSellingForACustomer 12, 4;
+GO
+
+-- 8. Obtener el cliente con más puntos en la tienda para que pueda obtener un descuento.
+CREATE VIEW ClientWithHighestScore
+AS
+SELECT TOP(1) * FROM Customers ORDER BY Points DESC
+GO
+go
+
+SELECT * FROM ClientWithHighestScore;
+GO
+
+-- 9. Actualizar clientes
+CREATE PROC UpdateCustomer(
+	@customerId INT,
+	@firstname VARCHAR(350) = NULL,
+	@lastname VARCHAR (500) = NULL,
+	@phone VARCHAR(10) = NULL,
+	@email VARCHAR(500) = NULL,
+	@points INT = NULL)
+AS BEGIN
+	BEGIN TRY
+		BEGIN TRANSACTION
+			IF(@firstname IS NOT NULL)
+				UPDATE Customers SET Firstname = @firstname WHERE Id = @customerId;
+			IF(@lastname IS NOT NULL)
+				UPDATE Customers SET Lastname = @lastname WHERE Id = @customerId;
+			IF(@phone IS NOT NULL)
+				UPDATE Customers SET Phone = @phone WHERE Id = @customerId;
+			IF(@email IS NOT NULL)
+				UPDATE Customers SET Email = @email WHERE Id = @customerId;
+			IF(@points IS NOT NULL)
+				UPDATE Customers SET Points = @points WHERE Id = @customerId;
+		COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+		PRINT 'Ha ocurrido un error en la actualización del Customer. No se aplicaron cambios.';
+	END CATCH
+END
+GO
+
+-- 10.1 Ranking de las categorias más vendidas
+CREATE VIEW CategoriesRanking
+AS
+SELECT TOP(10)
+	c.Name AS [Category Name],
+	SUM(od.Quantity) AS [Total Sales]
+FROM Categories AS c
+INNER JOIN Products AS p 
+	ON p.CategoryId = c.Id
+INNER JOIN OrderDetails AS od 
+	ON od.ProductId = p.Id
+GROUP BY c.Name
+ORDER BY [Total SAles] desc
+GO
+
+SELECT * FROM CategoriesRanking -- Test 10.1
+GO
+
+-- 10.2 Ranking de los productos más vendidos por categorías.
+CREATE PROC ProductsRankingByCategory(@categoryId INT)
+AS BEGIN
+	SELECT TOP(10)
+		p.Id AS [Product Id], 
+		p.Name AS [Product Name],
+		c.Name AS [Category Name],
+		p.Price,
+		SUM(od.Quantity) AS [Total Sales]
+	FROM Products AS p
+	INNER JOIN Categories as c
+		ON p.CategoryId = c.Id
+	INNER JOIN OrderDetails AS od
+		ON od.ProductId = p.Id
+	WHERE p.CategoryId = @categoryId
+	GROUP BY p.Id, p.Name, c.Name, p.Price
+	ORDER BY [Total Sales] DESC
+END
+
+EXEC ProductsRankingByCategory 6
