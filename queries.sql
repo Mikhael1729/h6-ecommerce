@@ -108,25 +108,15 @@ BEGIN
 	BEGIN TRY
 		BEGIN TRANSACTION;
 		IF(@categoryId IS NOT NULL)
-			BEGIN
 			UPDATE Products SET CategoryId = @categoryId WHERE Id = @id;
-			END
 		IF(@name IS NOT NULL)
-			BEGIN
 			UPDATE Products SET Name = @name WHERE Id = @id;
-			END
 		IF(@description IS NOT NULL)
-			BEGIN
 			UPDATE Products SET Description = @description WHERE Id = @id;
-			END
 		IF(@price IS NOT NULL)
-			BEGIN
 			UPDATE Products SET Description = @description WHERE Id = @id;
-			END
 		IF(@stock IS NOT NULL)
-			BEGIN
 			Update Products SET Stock += @stock WHERE Id = @id;
-			END
 		IF(@available IS NOT NULL)
 			BEGIN
 			Update Products SET Available = @available WHERE Id = @id;
