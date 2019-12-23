@@ -1,6 +1,3 @@
-DROP DATABASE AngieRopas
-GO
-
 CREATE DATABASE AngieRopas
 GO
 
@@ -144,7 +141,6 @@ BEGIN
 END
 GO
 
-DROP PROC AddToShoppingCart
 -- 4. Register purchases
 CREATE PROC AddToShoppingCart(
 	@customerId INT,
@@ -203,7 +199,6 @@ END
 GO
 
 -- 4.2 Purchase
-DROP PROC Purchase
 CREATE PROC Purchase(@customerId INT)
 AS
 BEGIN
