@@ -11,7 +11,7 @@ VALUES
 	('Vestidos'),
 	('Accesorios');
 
-	Select * from Categories
+Select * from Categories
 
 -- Ingresar Customers
 INSERT INTO Customers (FirstName, LastName, Phone, Points)
@@ -20,7 +20,10 @@ INSERT INTO Customers (FirstName, LastName, Phone, Points)
 		('Abigail', 'Fernández', '8295402463', 0);
 
 SELECT * FROM Customers
--- DELETE FROM Customers where Id = 10
+-- SELECT * FROM Products
+-- UPDATE Customers SET Points = 0
+-- UPDATE Products SET Stock = 10000
+
 /* Test Store Procedures */
 
 -- 1. Test InsertProduct
@@ -35,32 +38,39 @@ SELECT * FROM Products
 
 -- 2. Test Delete Product
 EXEC DeleteProduct 2;
+
 SELECT * FROM Products
+GO
 
 -- 3. Test UpdateProduct
 EXEC UpdateProduct 2, NULL, 'Le he cambiado el nombre al Producto 2';
 SELECT * FROM Products
+GO
 
 -- 4. Test RegisterPurchases
-SELECT * FROM Products
-SELECT * FROM Customers
-
-EXEC AddToShoppingCart 12, 13, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
-EXEC AddToShoppingCart 12, 11, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
-EXEC AddToShoppingCart 12, 10, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
+EXEC AddToShoppingCart 1, 1, 5 -- El artículo CustomerId, ProductId and Quantity
+EXEC AddToShoppingCart 1, 2, 5 -- NO SE VA A AGREGAR El artículo CustomerId, ProductId and Quantity
+EXEC AddToShoppingCart 1, 3, 5 -- El artículo CustomerId, ProductId and Quantity
 
 SELECT * FROM ShoppingCarts
+SELECT * FROM Products
+SELECT * FROM Customers
+GO
 
 -- 4.1 Test Remove from shopping cart
-EXEC RemoveFromShoppingCart 8, 3
+EXEC RemoveFromShoppingCart 1, 3;
+
+SELECT * FROM ShoppingCarts
+GO
 
 -- 4.2 Purchase. The following select statements are the modified tables after executing the store procedure after those.
+EXEC Purchase 1;
+
 SELECT * FROM Orders
 SELECT * FROM OrderDetails
 SELECT * FROM Customers
 SELECT * FROM ShoppingCarts
-
-EXEC Purchase 12;
+SELECT * FROM Products
 GO
 
 -- 5 Mostrar los 5 productos mas vendidos
@@ -68,7 +78,7 @@ SELECT * FROM TopFiveProducts
 GO
 
 -- 6. 
-EXEC BestSellingForACustomer 12, 4;
+EXEC BestSellingForACustomer 1, 5
 GO
 
 -- 8. Obtener el cliente con más puntos en la tienda para que pueda obtener un descuento.
@@ -76,12 +86,24 @@ SELECT * FROM ClientWithHighestScore;
 GO
 
 -- 9. Actualizar clientes
-EXEC UpdateCustomer 12, 'CAmbiado el nombre No. 12';
+EXEC UpdateCustomer 1, 'Cambiado el nombre No. 1';
+SELECT * FROM Customers
 GO
+
+-- 10.0 Generate 500 values
+EXEC Generate500ProductPurchases;
+
+SELECT * FROM Orders
+SELECT * FROM OrderDetails
+SELECT * FROM Customers
+SELECT * FROM Products
+GO
+
+DELETE FROM Orders
 
 -- 10.1 Ranking de las categorias más vendidas
 SELECT * FROM CategoriesRanking -- Test 10.1
 GO
 
 -- 10.2 Ranking de los productos más vendidos por categorías.
-EXEC ProductsRankingByCategory 6
+SELECT * FROM ProductsRankingByCategory

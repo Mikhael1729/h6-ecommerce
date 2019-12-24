@@ -1,8 +1,11 @@
+DROP DATABASE AngieRopas
+GO
+
 CREATE DATABASE AngieRopas
 GO
 
 USE AngieRopas
-GO
+GO 
 
 CREATE TABLE Categories (
 	Id INT CONSTRAINT PK_Id_Categories
@@ -35,7 +38,6 @@ CREATE TABLE Products (
 		FOREIGN KEY (CategoryId) REFERENCES Categories (Id) NOT NULL,
 );
 GO
-
 
 CREATE TABLE Orders(
 	Id INT CONSTRAINT PK_Id_Orders
@@ -206,14 +208,14 @@ BEGIN
 
 			-- Store current product of the shopping cart in the following variables.
 			DECLARE @productId INT, @productQuantity INT;
-			FETCH ShoppingCart_Cursor INTO @productId, @productQuantity;
 
 			-- Iterating through the rest of products in the shopping cart.
-			FETCH NEXT FROM ShoppingCart_Cursor;
+			FETCH NEXT FROM ShoppingCart_Cursor 
+				INTO @productId, @productQuantity;
 			WHILE @@FETCH_STATUS = 0
 				BEGIN
-					DECLARE @stock INT = (SELECT Stock FROM Products WHERE Id = @productId);
-					IF(@productQuantity <= @stock)
+					DECLARE @stock INT = (SELECT TOP(1) Stock FROM Products WHERE Id = @productId);
+					IF(@stock >= @productQuantity)
 						BEGIN
 							UPDATE Products SET Stock -= @productQuantity WHERE Id = @productId;
 							FETCH NEXT FROM ShoppingCart_Cursor;
@@ -259,7 +261,7 @@ BEGIN
 				p.Price,
 				(p.Price * s.Quantity * 0.18)
 			FROM ShoppingCarts AS s
-			INNER JOIN Products as p ON p.Id = s.ProductId
+			INNER JOIN Products as p ON s.ProductId = p.Id
 			WHERE s.CustomerId = @customerId;
 
 			/* Update customer points */
@@ -277,9 +279,10 @@ BEGIN
 
 			/* Clean shopping cart */
 			DELETE ShoppingCarts WHERE CustomerId = @customerId;
-	
-			PRINT 'Orden Registrada';
+
 		COMMIT TRANSACTION
+
+		PRINT 'Orden Registrada';
 	END TRY
 	BEGIN CATCH
 		ROLLBACK TRANSACTION
@@ -371,20 +374,60 @@ ORDER BY [Total SAles] desc
 GO
 
 -- 10.2 Ranking de los productos más vendidos por categorías.
-CREATE PROC ProductsRankingByCategory(@categoryId INT)
+CREATE VIEW ProductsRankingByCategory 
+AS
+SELECT TOP(10)
+	c.Id AS [Category Id],
+	c.Name AS [Category Name],
+	p.Id AS [Product Id], 
+	p.Name AS [Product Name],
+	p.Price,
+	SUM(od.Quantity) AS [Total Sales]
+FROM Products AS p
+INNER JOIN Categories as c
+	ON p.CategoryId = c.Id
+INNER JOIN OrderDetails AS od
+	ON od.ProductId = p.Id
+GROUP BY p.Id, p.Name, c.Id, c.Name, p.Price
+ORDER BY [Category Id], [Total Sales], [Product Id] DESC
+GO
+
+CREATE PROC Generate500ProductPurchases
 AS BEGIN
-	SELECT TOP(10)
-		p.Id AS [Product Id], 
-		p.Name AS [Product Name],
-		c.Name AS [Category Name],
-		p.Price,
-		SUM(od.Quantity) AS [Total Sales]
-	FROM Products AS p
-	INNER JOIN Categories as c
-		ON p.CategoryId = c.Id
-	INNER JOIN OrderDetails AS od
-		ON od.ProductId = p.Id
-	WHERE p.CategoryId = @categoryId
-	GROUP BY p.Id, p.Name, c.Name, p.Price
-	ORDER BY [Total Sales] DESC
+	BEGIN TRY
+		BEGIN TRANSACTION
+			-- Process	
+			DECLARE @i INT = 0;
+
+			-- Random UserId
+			WHILE @i < 500
+				BEGIN
+					-- Customer ID
+					DECLARE @customerId INT = (FLOOR(RAND()*(4-1+1)+1));
+					
+					-- Quantity
+					DECLARE @quantity INT =  (FLOOR(RAND()*(30-5+1)+5));
+
+					-- Product ID
+					DECLARE @productId1 INT =  (FLOOR(RAND()*(6-3+1)+3));
+					DECLARE @productId2 INT =  (FLOOR(RAND()*(6-3+1)+3));
+
+					SELECT * FROM Products
+
+					-- Add products to the shopping cart
+					EXEC AddToShoppingCart @customerId, @productId1, @quantity;
+					EXEC AddToShoppingCart @customerId, @productId2, @quantity;
+
+					-- Purchase
+					EXEC Purchase @customerId;
+
+					SET @i = @i + 1;
+				END
+			COMMIT TRANSACTION
+		END TRY
+		BEGIN CATCH
+			ROLLBACK TRANSACTION
+			PRINT 'Ocurrió un error al generar los 500 registros'
+		END CATCH
 END
+GO
